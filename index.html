@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DG Dash</title>
+
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="dist/css/adminlte.min.css">
+</head>
+
+<body class="hold-transition layout-top-nav">
+    <div class="wrapper">
+
+        <!-- Content Wrapper. Contains page content -->
+        <div class="content-wrapper">
+
+
+            <div class="content-header">
+                <div class="container">
+                    <div class="row mb-2">
+                        <div class="col-sm-6">
+                            <h1 class="m-0"> Jacob's Pickup Dash</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Main content -->
+            <div class="content">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-6">
+
+                            <!-- Scores Graph -->
+                            <div class="card card-info">
+                                <div class="card-header" style="cursor: help;" title="Top speed, in mph, recorded during the game. Velocity measurements are filtered through a 0.1hz 5th order Butterworth filter to try to pull out spurious data.">
+                                    <h3 class="card-title">Top Speed</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart">
+                                        <canvas id="top_speeds"
+                                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Drives Graph -->
+                            <div class="card card-info">
+                                <div class="card-header" style="cursor: help;" title="Average peak speed of all cuts in mph.">
+                                    <h3 class="card-title">Average Cut Speed</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart">
+                                        <canvas id="average_speed"
+                                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="card card-info">
+                                <div class="card-header" style="cursor: help;" title="Total distance traveled in miles.">
+                                    <h3 class="card-title">Total Distance</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart">
+                                        <canvas id="game_dist"
+                                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="card card-info">
+                                <div class="card-header" style="cursor: help;" title="Fraction of the game time spent moving > 10 mph.">
+                                    <h3 class="card-title">Fraction > 10mph</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart">
+                                        <canvas id="frac"
+                                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+                        <div class="col-lg-6">
+
+                            <!-- Putting Graph -->
+                            <div class="card card-info">
+                                <div class="card-header" title="Total number of independent cuts. Defined by recording speeds > 10 mph at least 1 second apart.">
+                                    <h3 class="card-title">Number of Cuts</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart">
+                                        <canvas id="num_cuts"
+                                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                            <!-- Putting Graph -->
+                            <div class="card card-info">
+                                <div class="card-header" style="cursor: help;" title="Average length of cuts in seconds.">
+                                    <h3 class="card-title">Average Cut Length</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart">
+                                        <canvas id="len_cuts"
+                                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                            <!-- Putting Graph -->
+                            <div class="card card-info">
+                                <div class="card-header" style="cursor: help;" title="Total length of game in minutes.">
+                                    <h3 class="card-title">Length of Game</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart">
+                                        <canvas id="game_len"
+                                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                        </div>
+                    </div>
+
+
+
+
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- REQUIRED SCRIPTS -->
+
+        <!-- jQuery -->
+        <script src="plugins/jquery/jquery.min.js"></script>
+        <!-- Bootstrap 4 -->
+        <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <!-- AdminLTE App -->
+        <script src="dist/js/adminlte.min.js"></script>
+        <!-- AdminLTE for demo purposes -->
+        <!-- <script src="../../dist/js/demo.js"></script> -->
+        <!-- ChartJS -->
+        <script src="plugins/chart.js/Chart.min.js"></script>
+        <!-- Ekko Lightbox -->
+        <link rel="stylesheet" href="plugins/ekko-lightbox/ekko-lightbox.css">
+
+        <script>
+
+            $(function () {
+
+                // Get the latest data from github
+                $.ajax({
+                    url: "https://raw.githubusercontent.com/jacobwood27/049_pickup_stats/main/dat.json",
+                    dataType: "json"
+                }).done(function (data) {
+
+                    //Make Recent Scores chart
+                    var recent_scores_canvas = $('#top_speeds').get(0).getContext('2d')
+
+                    var lineChartOptions = {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        legend: { display: false },
+                        scales: {
+                            xAxes: [{ gridLines: { display: false } }],
+                        }
+                    }
+
+                    var lineChart = new Chart(recent_scores_canvas, {
+                        type: 'line',
+                        data: {
+                            labels: data.name,
+                            datasets: [
+                                {
+                                    label: false,
+                                    data: data.maxv,
+                                    backgroundColor: "rgba(60,141,188,0.9)",
+                                    borderColor: "rgba(60,141,188,0.8)",
+                                    borderWidth: 3,
+                                    pointRadius: 5,
+                                    pointColor: "#3b8bba",
+                                    pointStrokeColor: "rgba(60,141,188,1)",
+                                    pointHighlightFill: "#fff",
+                                    pointHighlightStroke: "rgba(60,141,188,1)",
+                                    showLine: true,
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: lineChartOptions
+                    });
+
+
+                    //Make Average Cut Speed Chart
+                    var average_speed_canvas = $('#average_speed').get(0).getContext('2d')
+
+                    var lineChartOptions = {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        legend: { display: false },
+                        scales: {
+                            xAxes: [{ gridLines: { display: false } }],
+                        }
+                    }
+
+                    var lineChart = new Chart(average_speed_canvas, {
+                        type: 'line',
+                        data: {
+                            labels: data.name,
+                            datasets: [
+                                {
+                                    label: false,
+                                    data: data.avgv,
+                                    backgroundColor: "rgba(60,141,188,0.9)",
+                                    borderColor: "rgba(60,141,188,0.8)",
+                                    borderWidth: 3,
+                                    pointRadius: 5,
+                                    pointColor: "#3b8bba",
+                                    pointStrokeColor: "rgba(60,141,188,1)",
+                                    pointHighlightFill: "#fff",
+                                    pointHighlightStroke: "rgba(60,141,188,1)",
+                                    showLine: true,
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: lineChartOptions
+                    });
+
+
+                    //Make Num Cuts Chart
+                    var num_cuts_canvas = $('#num_cuts').get(0).getContext('2d')
+
+                    var lineChartOptions = {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        legend: { display: false },
+                        scales: {
+                            xAxes: [{ gridLines: { display: false } }],
+                        }
+                    }
+
+                    var lineChart = new Chart(num_cuts_canvas, {
+                        type: 'line',
+                        data: {
+                            labels: data.name,
+                            datasets: [
+                                {
+                                    label: false,
+                                    data: data.ncut,
+                                    backgroundColor: "rgba(60,141,188,0.9)",
+                                    borderColor: "rgba(60,141,188,0.8)",
+                                    borderWidth: 3,
+                                    pointRadius: 5,
+                                    pointColor: "#3b8bba",
+                                    pointStrokeColor: "rgba(60,141,188,1)",
+                                    pointHighlightFill: "#fff",
+                                    pointHighlightStroke: "rgba(60,141,188,1)",
+                                    showLine: true,
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: lineChartOptions
+                    });
+
+
+                    //Make Cut Len Chart
+                    var len_cuts_canvas = $('#len_cuts').get(0).getContext('2d')
+
+                    var lineChartOptions = {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        legend: { display: false },
+                        scales: {
+                            xAxes: [{ gridLines: { display: false } }],
+                        }
+                    }
+
+                    var lineChart = new Chart(len_cuts_canvas, {
+                        type: 'line',
+                        data: {
+                            labels: data.name,
+                            datasets: [
+                                {
+                                    label: false,
+                                    data: data.avgl,
+                                    backgroundColor: "rgba(60,141,188,0.9)",
+                                    borderColor: "rgba(60,141,188,0.8)",
+                                    borderWidth: 3,
+                                    pointRadius: 5,
+                                    pointColor: "#3b8bba",
+                                    pointStrokeColor: "rgba(60,141,188,1)",
+                                    pointHighlightFill: "#fff",
+                                    pointHighlightStroke: "rgba(60,141,188,1)",
+                                    showLine: true,
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: lineChartOptions
+                    });
+
+
+
+
+                    //Make Game Dist Chart
+                    var game_dist = $('#game_dist').get(0).getContext('2d')
+
+                    var lineChartOptions = {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        legend: { display: false },
+                        scales: {
+                            xAxes: [{ gridLines: { display: false } }],
+                        }
+                    }
+
+                    var lineChart = new Chart(game_dist, {
+                        type: 'line',
+                        data: {
+                            labels: data.name,
+                            datasets: [
+                                {
+                                    label: false,
+                                    data: data.dist,
+                                    backgroundColor: "rgba(60,141,188,0.9)",
+                                    borderColor: "rgba(60,141,188,0.8)",
+                                    borderWidth: 3,
+                                    pointRadius: 5,
+                                    pointColor: "#3b8bba",
+                                    pointStrokeColor: "rgba(60,141,188,1)",
+                                    pointHighlightFill: "#fff",
+                                    pointHighlightStroke: "rgba(60,141,188,1)",
+                                    showLine: true,
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: lineChartOptions
+                    });
+
+                    
+
+                    //Make Game Len Chart
+                    var game_len = $('#game_len').get(0).getContext('2d')
+
+                    var lineChartOptions = {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        legend: { display: false },
+                        scales: {
+                            xAxes: [{ gridLines: { display: false } }],
+                        }
+                    }
+
+                    var lineChart = new Chart(game_len, {
+                        type: 'line',
+                        data: {
+                            labels: data.name,
+                            datasets: [
+                                {
+                                    label: false,
+                                    data: data.time,
+                                    backgroundColor: "rgba(60,141,188,0.9)",
+                                    borderColor: "rgba(60,141,188,0.8)",
+                                    borderWidth: 3,
+                                    pointRadius: 5,
+                                    pointColor: "#3b8bba",
+                                    pointStrokeColor: "rgba(60,141,188,1)",
+                                    pointHighlightFill: "#fff",
+                                    pointHighlightStroke: "rgba(60,141,188,1)",
+                                    showLine: true,
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: lineChartOptions
+                    });
+
+
+
+                    //Make Game Len Chart
+                    var game_len = $('#frac').get(0).getContext('2d')
+
+                    var lineChartOptions = {
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        legend: { display: false },
+                        scales: {
+                            xAxes: [{ gridLines: { display: false } }],
+                        }
+                    }
+
+                    var lineChart = new Chart(game_len, {
+                        type: 'line',
+                        data: {
+                            labels: data.name,
+                            datasets: [
+                                {
+                                    label: false,
+                                    data: data.frac.map(x => x * 100),
+                                    backgroundColor: "rgba(60,141,188,0.9)",
+                                    borderColor: "rgba(60,141,188,0.8)",
+                                    borderWidth: 3,
+                                    pointRadius: 5,
+                                    pointColor: "#3b8bba",
+                                    pointStrokeColor: "rgba(60,141,188,1)",
+                                    pointHighlightFill: "#fff",
+                                    pointHighlightStroke: "rgba(60,141,188,1)",
+                                    showLine: true,
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: lineChartOptions
+                    });
+
+                    // //Make long drive chart
+                    // var drives_canvas = $('#recent_drives').get(0).getContext('2d')
+
+                    // var lineChartOptions = {
+                    //     maintainAspectRatio: false,
+                    //     responsive: true,
+                    //     legend: { display: false },
+                    //     scales: {
+                    //         xAxes: [{ gridLines: { display: false } }],
+                    //     }
+                    // }
+
+                    // var lineChart = new Chart(drives_canvas, {
+                    //     type: 'line',
+                    //     data: data.drives,
+                    //     options: lineChartOptions
+                    // });
+
+                    // //Make recent putts chart
+                    // var recent_putts_canvas = $('#recent_putts').get(0).getContext('2d')
+
+                    // var lineChartOptions = {
+                    //     maintainAspectRatio: false,
+                    //     responsive: true,
+                    //     legend: { display: true },
+                    //     scales: {
+                    //         xAxes: [{ gridLines: { display: false } }],
+                    //     }
+                    // }
+
+                    // var lineChart = new Chart(recent_putts_canvas, {
+                    //     type: 'line',
+                    //     data: data.putts,
+                    //     options: lineChartOptions
+                    // });
+
+
+                    // //Make "what's in the bag"
+                    // gallery_div = document.getElementById('disc_gallery');
+                    // data.discs.forEach(function (disc) {
+                    //     var div = document.createElement('div');
+                    //     div.className = 'col-sm-2';
+                    //     var img = document.createElement('img');
+                    //     img.className = 'img-fluid mb-2';
+                    //     img.src = 'https://raw.githubusercontent.com/jacobwood27/dg_stats/main/discs/disc_pics/' + disc.image;
+                    //     img.title = disc.id + '\n' +
+                    //         disc.mold + '\n' +
+                    //         'Plastic: ' + disc.plastic + '\n' +
+                    //         'Mass: ' + disc.mass + 'g' + '\n' +
+                    //         'Numbers: ' + disc.numbers;
+                    //     div.appendChild(img);
+                    //     gallery_div.appendChild(div);
+                    // });
+
+
+                    // //Make disc selection chart
+                    // var dselection_canvas = $('#disc_selection').get(0).getContext('2d')
+
+                    // var lineChartOptions = {
+                    //     maintainAspectRatio: false,
+                    //     responsive: true,
+                    //     legend: { display: true },
+                    //     scales: {
+                    //         xAxes: [{ gridLines: { display: false } }],
+                    //         yAxes: [{ gridLines: { display: false } }],
+                    //         y: {
+                    //             stacked: true,
+                    //         }
+                    //     }
+                    // }
+
+                    // var lineChart = new Chart(dselection_canvas, {
+                    //     type: 'line',
+                    //     data: data.disc_selection,
+                    //     options: lineChartOptions
+                    // });
+
+
+
+
+                    // //Make rounds table
+                    // rounds_div = document.getElementById('rounds');
+                    // data.rounds.forEach(function (round) {
+                    //     var tr = document.createElement('tr');
+
+                    //     var td = document.createElement('td');
+                    //     td.innerHTML = round.date;
+                    //     tr.appendChild(td);
+
+                    //     var td = document.createElement('td');
+                    //     td.innerHTML = round.course;
+                    //     tr.appendChild(td);
+
+                    //     var td = document.createElement('td');
+                    //     td.innerHTML = round.score;
+                    //     tr.appendChild(td);
+
+                    //     tr.addEventListener("click", () => {
+                    //         window.location.href = 'map/?round_id=' + round.id;
+                    //     });
+
+                    //     rounds_div.appendChild(tr);
+                    // });
+
+
+                });
+            })
+
+        </script>
+
+</body>
+
+</html>
