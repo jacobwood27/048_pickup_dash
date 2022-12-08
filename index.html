@@ -37,12 +37,28 @@
             <!-- Main content -->
             <div class="content">
                 <div class="container">
+
+                    <!-- All Graph -->
+                    <div class="card card-info">
+                        <div class="card-header" style="cursor: help;"
+                            title="Top speed, in mph, recorded during the game. Velocity measurements are filtered through a 0.1hz 5th order Butterworth filter to try to pull out spurious data.">
+                            <h3 class="card-title">All</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart">
+                                <canvas id="all_graph"
+                                    style="min-height: 250px; height: 500px; max-height: 500px; max-width: 100%;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-lg-6">
 
                             <!-- Scores Graph -->
                             <div class="card card-info">
-                                <div class="card-header" style="cursor: help;" title="Top speed, in mph, recorded during the game. Velocity measurements are filtered through a 0.1hz 5th order Butterworth filter to try to pull out spurious data.">
+                                <div class="card-header" style="cursor: help;"
+                                    title="Top speed, in mph, recorded during the game. Velocity measurements are filtered through a 0.1hz 5th order Butterworth filter to try to pull out spurious data.">
                                     <h3 class="card-title">Top Speed</h3>
                                 </div>
                                 <div class="card-body">
@@ -55,7 +71,8 @@
 
                             <!-- Drives Graph -->
                             <div class="card card-info">
-                                <div class="card-header" style="cursor: help;" title="Average peak speed of all cuts in mph.">
+                                <div class="card-header" style="cursor: help;"
+                                    title="Average peak speed of all cuts in mph.">
                                     <h3 class="card-title">Average Cut Speed</h3>
                                 </div>
                                 <div class="card-body">
@@ -68,7 +85,8 @@
 
 
                             <div class="card card-info">
-                                <div class="card-header" style="cursor: help;" title="Total distance traveled in miles.">
+                                <div class="card-header" style="cursor: help;"
+                                    title="Total distance traveled in miles.">
                                     <h3 class="card-title">Total Distance</h3>
                                 </div>
                                 <div class="card-body">
@@ -81,7 +99,8 @@
 
 
                             <div class="card card-info">
-                                <div class="card-header" style="cursor: help;" title="Fraction of the game time spent moving > 10 mph.">
+                                <div class="card-header" style="cursor: help;"
+                                    title="Fraction of the game time spent moving > 10 mph.">
                                     <h3 class="card-title">Fraction > 10mph</h3>
                                 </div>
                                 <div class="card-body">
@@ -98,7 +117,8 @@
 
                             <!-- Putting Graph -->
                             <div class="card card-info">
-                                <div class="card-header" title="Total number of independent cuts. Defined by recording speeds > 10 mph at least 1 second apart.">
+                                <div class="card-header"
+                                    title="Total number of independent cuts. Defined by recording speeds > 10 mph at least 1 second apart.">
                                     <h3 class="card-title">Number of Cuts</h3>
                                 </div>
                                 <div class="card-body">
@@ -113,7 +133,8 @@
 
                             <!-- Putting Graph -->
                             <div class="card card-info">
-                                <div class="card-header" style="cursor: help;" title="Average length of cuts in seconds.">
+                                <div class="card-header" style="cursor: help;"
+                                    title="Average length of cuts in seconds.">
                                     <h3 class="card-title">Average Cut Length</h3>
                                 </div>
                                 <div class="card-body">
@@ -170,6 +191,9 @@
 
         <script>
 
+            //load colors from chartjs
+            var colors = Chart.helpers.color;
+
             $(function () {
 
                 // Get the latest data from github
@@ -177,6 +201,163 @@
                     url: "https://raw.githubusercontent.com/jacobwood27/049_pickup_stats/main/dat.json",
                     dataType: "json"
                 }).done(function (data) {
+
+                    // pull the dates out of data.name and convert to datetime objects
+                    var dates = data.name.map(function (d) {
+                        return new Date(d)
+                    })
+
+
+                    //Make All Scores chart
+                    var all_scores_canvas = $('#all_graph').get(0).getContext('2d')
+
+                    var lineChartOptions = {
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'dataset'
+                        },
+                        responsive: true,
+                        legend: { display: true },
+                        scales: {
+                            xAxes: [{
+                                ticks: { callback: (value) => { return new Date(value).toLocaleDateString({ month: "short", year: "numeric" }); } },
+                                gridLines: { display: false }
+                            }],
+                            yAxes: [{
+                                display: false,
+                                id: "id1"
+                            },
+                            {
+                                display: false,
+                                id: "id2"
+                            },
+                            {
+                                display: false,
+                                id: "id3"
+                            },
+                            {
+                                display: false,
+                                id: "id4"
+                            },
+                            {
+                                display: false,
+                                id: "id5"
+                            },
+                            {
+                                display: false,
+                                id: "id6"
+                            }],
+                        }
+                    }
+
+                    // combine dates and data.maxv into a single array of objects, sorted by date
+                    var maxv_dat = dates.map(function (d, i) {
+                        return { x: d, y: data.maxv[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
+                    var avgv_dat = dates.map(function (d, i) {
+                        return { x: d, y: data.avgv[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
+                    var ncut_dat = dates.map(function (d, i) {
+                        return { x: d, y: data.ncut[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
+                    var lcut_dat = dates.map(function (d, i) {
+                        return { x: d, y: data.avgl[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
+                    var dist_dat = dates.map(function (d, i) {
+                        return { x: d, y: data.dist[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
+                    var frac_dat = dates.map(function (d, i) {
+                        return { x: d, y: data.frac[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
+                    var lineChart = new Chart(all_scores_canvas, {
+                        type: 'scatter',
+                        data: {
+                            datasets: [
+                                {
+                                    label: "Max Speed",
+                                    data: maxv_dat,
+                                    showLine: true,
+                                    fill: false,
+                                    yAxisID: "id1",
+                                    backgroundColor: "#9b5fe0",
+                                    borderColor: "#9b5fe0",
+                                },
+                                {
+                                    label: "Average Speed",
+                                    data: avgv_dat,
+                                    showLine: true,
+                                    fill: false,
+                                    yAxisID: "id2",
+                                    backgroundColor: "#16a4d8",
+                                    borderColor: "#16a4d8",
+                                },
+                                {
+                                    label: "# Cuts",
+                                    data: ncut_dat,
+                                    showLine: true,
+                                    fill: false,
+                                    yAxisID: "id3",
+                                    backgroundColor: "#60dbe8",
+                                    borderColor: "#60dbe8",
+                                },
+                                {
+                                    label: "Cut Length",
+                                    data: lcut_dat,
+                                    showLine: true,
+                                    fill: false,
+                                    yAxisID: "id4",
+                                    backgroundColor: "#8bd346",
+                                    borderColor: "#8bd346",
+                                },
+                                {
+                                    label: "Frac > 10 mph",
+                                    data: frac_dat,
+                                    showLine: true,
+                                    fill: false,
+                                    yAxisID: "id5",
+                                    backgroundColor: "#efdf48",
+                                    borderColor: "#efdf48",
+                                },
+                                {
+                                    label: "Total Distance",
+                                    data: dist_dat,
+                                    showLine: true,
+                                    fill: false,
+                                    yAxisID: "id6",
+                                    backgroundColor: "#d64e12",
+                                    borderColor: "#d64e12",
+                                }
+                            ]
+                        },
+                        options: lineChartOptions
+                    });
+
+
+
+
+
+
+
+
+
 
                     //Make Recent Scores chart
                     var recent_scores_canvas = $('#top_speeds').get(0).getContext('2d')
@@ -186,18 +367,33 @@
                         responsive: true,
                         legend: { display: false },
                         scales: {
-                            xAxes: [{ gridLines: { display: false } }],
+                            xAxes: [{
+                                ticks: { callback: (value) => { return new Date(value).toLocaleDateString({ month: "short", year: "numeric" }); } },
+                                gridLines: { display: false }
+                            }],
+                            yAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Speed [mph]'
+                                }
+                            }]
                         }
                     }
 
+                    // combine dates and data.maxv into a single array of objects, sorted by date
+                    pdat = dates.map(function (d, i) {
+                        return { x: d, y: data.maxv[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
                     var lineChart = new Chart(recent_scores_canvas, {
-                        type: 'line',
+                        type: 'scatter',
                         data: {
-                            labels: data.name,
                             datasets: [
                                 {
                                     label: false,
-                                    data: data.maxv,
+                                    data: pdat,
                                     backgroundColor: "rgba(60,141,188,0.9)",
                                     borderColor: "rgba(60,141,188,0.8)",
                                     borderWidth: 3,
@@ -223,18 +419,34 @@
                         responsive: true,
                         legend: { display: false },
                         scales: {
-                            xAxes: [{ gridLines: { display: false } }],
+                            xAxes: [{
+                                ticks: { callback: (value) => { return new Date(value).toLocaleDateString({ month: "short", year: "numeric" }); } },
+                                gridLines: { display: false }
+                            }],
+                            yAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Speed [mph]'
+                                }
+                            }]
                         }
                     }
 
+                    // combine dates and data.avgv into a single array of objects, sorted by date
+                    pdat = dates.map(function (d, i) {
+                        return { x: d, y: data.avgv[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
                     var lineChart = new Chart(average_speed_canvas, {
-                        type: 'line',
+                        type: 'scatter',
                         data: {
                             labels: data.name,
                             datasets: [
                                 {
                                     label: false,
-                                    data: data.avgv,
+                                    data: pdat,
                                     backgroundColor: "rgba(60,141,188,0.9)",
                                     borderColor: "rgba(60,141,188,0.8)",
                                     borderWidth: 3,
@@ -260,18 +472,28 @@
                         responsive: true,
                         legend: { display: false },
                         scales: {
-                            xAxes: [{ gridLines: { display: false } }],
+                            xAxes: [{
+                                ticks: { callback: (value) => { return new Date(value).toLocaleDateString({ month: "short", year: "numeric" }); } },
+                                gridLines: { display: false }
+                            }]
+
                         }
                     }
 
+                    // combine dates and data.ncut into a single array of objects, sorted by date
+                    pdat = dates.map(function (d, i) {
+                        return { x: d, y: data.ncut[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
                     var lineChart = new Chart(num_cuts_canvas, {
-                        type: 'line',
+                        type: 'scatter',
                         data: {
-                            labels: data.name,
                             datasets: [
                                 {
                                     label: false,
-                                    data: data.ncut,
+                                    data: pdat,
                                     backgroundColor: "rgba(60,141,188,0.9)",
                                     borderColor: "rgba(60,141,188,0.8)",
                                     borderWidth: 3,
@@ -297,18 +519,33 @@
                         responsive: true,
                         legend: { display: false },
                         scales: {
-                            xAxes: [{ gridLines: { display: false } }],
+                            xAxes: [{
+                                ticks: { callback: (value) => { return new Date(value).toLocaleDateString({ month: "short", year: "numeric" }); } },
+                                gridLines: { display: false }
+                            }],
+                            yAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Time [sec]'
+                                }
+                            }]
                         }
                     }
 
+                    // combine dates and data.avgl into a single array of objects, sorted by date
+                    pdat = dates.map(function (d, i) {
+                        return { x: d, y: data.avgl[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
                     var lineChart = new Chart(len_cuts_canvas, {
-                        type: 'line',
+                        type: 'scatter',
                         data: {
-                            labels: data.name,
                             datasets: [
                                 {
                                     label: false,
-                                    data: data.avgl,
+                                    data: pdat,
                                     backgroundColor: "rgba(60,141,188,0.9)",
                                     borderColor: "rgba(60,141,188,0.8)",
                                     borderWidth: 3,
@@ -336,18 +573,34 @@
                         responsive: true,
                         legend: { display: false },
                         scales: {
-                            xAxes: [{ gridLines: { display: false } }],
+                            xAxes: [{
+                                ticks: { callback: (value) => { return new Date(value).toLocaleDateString({ month: "short", year: "numeric" }); } },
+                                gridLines: { display: false }
+                            }],
+                            yAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Distance [mi]'
+                                }
+                            }]
                         }
                     }
 
+                    // combine dates and data.avgl into a single array of objects, sorted by date
+                    pdat = dates.map(function (d, i) {
+                        return { x: d, y: data.dist[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
                     var lineChart = new Chart(game_dist, {
-                        type: 'line',
+                        type: 'scatter',
                         data: {
                             labels: data.name,
                             datasets: [
                                 {
                                     label: false,
-                                    data: data.dist,
+                                    data: pdat,
                                     backgroundColor: "rgba(60,141,188,0.9)",
                                     borderColor: "rgba(60,141,188,0.8)",
                                     borderWidth: 3,
@@ -364,7 +617,7 @@
                         options: lineChartOptions
                     });
 
-                    
+
 
                     //Make Game Len Chart
                     var game_len = $('#game_len').get(0).getContext('2d')
@@ -374,18 +627,33 @@
                         responsive: true,
                         legend: { display: false },
                         scales: {
-                            xAxes: [{ gridLines: { display: false } }],
+                            xAxes: [{
+                                ticks: { callback: (value) => { return new Date(value).toLocaleDateString({ month: "short", year: "numeric" }); } },
+                                gridLines: { display: false }
+                            }],
+                            yAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Time [min]'
+                                }
+                            }]
                         }
                     }
 
+                    pdat = dates.map(function (d, i) {
+                        return { x: d, y: data.time[i] }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+
                     var lineChart = new Chart(game_len, {
-                        type: 'line',
+                        type: 'scatter',
                         data: {
                             labels: data.name,
                             datasets: [
                                 {
                                     label: false,
-                                    data: data.time,
+                                    data: pdat,
                                     backgroundColor: "rgba(60,141,188,0.9)",
                                     borderColor: "rgba(60,141,188,0.8)",
                                     borderWidth: 3,
@@ -412,18 +680,36 @@
                         responsive: true,
                         legend: { display: false },
                         scales: {
-                            xAxes: [{ gridLines: { display: false } }],
+                            xAxes: [{
+                                ticks: { callback: (value) => { return new Date(value).toLocaleDateString({ month: "short", year: "numeric" }); } },
+                                gridLines: { display: false }
+                            }],
+                            yAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Fraction [%]'
+                                },
+                                ticks: {
+                                    suggestedMin: 0,
+                                }
+                            }]
                         }
                     }
 
+                    pdat = dates.map(function (d, i) {
+                        return { x: d, y: data.frac[i] * 100 }
+                    }).sort(function (a, b) {
+                        return a.x - b.x
+                    })
+                    
                     var lineChart = new Chart(game_len, {
-                        type: 'line',
+                        type: 'scatter',
                         data: {
                             labels: data.name,
                             datasets: [
                                 {
                                     label: false,
-                                    data: data.frac.map(x => x * 100),
+                                    data: pdat,
                                     backgroundColor: "rgba(60,141,188,0.9)",
                                     borderColor: "rgba(60,141,188,0.8)",
                                     borderWidth: 3,
@@ -439,111 +725,6 @@
                         },
                         options: lineChartOptions
                     });
-
-                    // //Make long drive chart
-                    // var drives_canvas = $('#recent_drives').get(0).getContext('2d')
-
-                    // var lineChartOptions = {
-                    //     maintainAspectRatio: false,
-                    //     responsive: true,
-                    //     legend: { display: false },
-                    //     scales: {
-                    //         xAxes: [{ gridLines: { display: false } }],
-                    //     }
-                    // }
-
-                    // var lineChart = new Chart(drives_canvas, {
-                    //     type: 'line',
-                    //     data: data.drives,
-                    //     options: lineChartOptions
-                    // });
-
-                    // //Make recent putts chart
-                    // var recent_putts_canvas = $('#recent_putts').get(0).getContext('2d')
-
-                    // var lineChartOptions = {
-                    //     maintainAspectRatio: false,
-                    //     responsive: true,
-                    //     legend: { display: true },
-                    //     scales: {
-                    //         xAxes: [{ gridLines: { display: false } }],
-                    //     }
-                    // }
-
-                    // var lineChart = new Chart(recent_putts_canvas, {
-                    //     type: 'line',
-                    //     data: data.putts,
-                    //     options: lineChartOptions
-                    // });
-
-
-                    // //Make "what's in the bag"
-                    // gallery_div = document.getElementById('disc_gallery');
-                    // data.discs.forEach(function (disc) {
-                    //     var div = document.createElement('div');
-                    //     div.className = 'col-sm-2';
-                    //     var img = document.createElement('img');
-                    //     img.className = 'img-fluid mb-2';
-                    //     img.src = 'https://raw.githubusercontent.com/jacobwood27/dg_stats/main/discs/disc_pics/' + disc.image;
-                    //     img.title = disc.id + '\n' +
-                    //         disc.mold + '\n' +
-                    //         'Plastic: ' + disc.plastic + '\n' +
-                    //         'Mass: ' + disc.mass + 'g' + '\n' +
-                    //         'Numbers: ' + disc.numbers;
-                    //     div.appendChild(img);
-                    //     gallery_div.appendChild(div);
-                    // });
-
-
-                    // //Make disc selection chart
-                    // var dselection_canvas = $('#disc_selection').get(0).getContext('2d')
-
-                    // var lineChartOptions = {
-                    //     maintainAspectRatio: false,
-                    //     responsive: true,
-                    //     legend: { display: true },
-                    //     scales: {
-                    //         xAxes: [{ gridLines: { display: false } }],
-                    //         yAxes: [{ gridLines: { display: false } }],
-                    //         y: {
-                    //             stacked: true,
-                    //         }
-                    //     }
-                    // }
-
-                    // var lineChart = new Chart(dselection_canvas, {
-                    //     type: 'line',
-                    //     data: data.disc_selection,
-                    //     options: lineChartOptions
-                    // });
-
-
-
-
-                    // //Make rounds table
-                    // rounds_div = document.getElementById('rounds');
-                    // data.rounds.forEach(function (round) {
-                    //     var tr = document.createElement('tr');
-
-                    //     var td = document.createElement('td');
-                    //     td.innerHTML = round.date;
-                    //     tr.appendChild(td);
-
-                    //     var td = document.createElement('td');
-                    //     td.innerHTML = round.course;
-                    //     tr.appendChild(td);
-
-                    //     var td = document.createElement('td');
-                    //     td.innerHTML = round.score;
-                    //     tr.appendChild(td);
-
-                    //     tr.addEventListener("click", () => {
-                    //         window.location.href = 'map/?round_id=' + round.id;
-                    //     });
-
-                    //     rounds_div.appendChild(tr);
-                    // });
-
 
                 });
             })
